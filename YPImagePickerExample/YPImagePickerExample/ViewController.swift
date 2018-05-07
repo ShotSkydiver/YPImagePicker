@@ -41,7 +41,7 @@ class ViewController: UIViewController {
         // Uncomment and play around with the configuration 👨‍🔬 🚀
 
 //        /// Set this to true if you want to force the  library output to be a squared image. Defaults to false
-//        config.onlySquareImagesFromLibrary = true
+//        config.onlySquareFromLibrary = true
 //
 //        /// Set this to true if you want to force the camera output to be a squared image. Defaults to true
 //        config.onlySquareImagesFromCamera = false
@@ -78,11 +78,12 @@ class ViewController: UIViewController {
 //
 //        /// Defines which screen is shown at launch. Video mode will only work if `showsVideo = true`.
 //        /// Default value is `.photo`
-//        config.startOnScreen = .video
+        config.startOnScreen = .library
 //
 //        /// Defines which screens are shown at launch, and their order.
 //        /// Default value is `[.library, .photo]`
         config.screens = [.library, .photo, .video]
+
 //
 //        /// Defines the time limit for recording videos.
 //        /// Default is 30 seconds.
@@ -90,9 +91,9 @@ class ViewController: UIViewController {
 //
 //        /// Defines the time limit for videos from the library.
 //        /// Defaults to 60 seconds.
-//        config.videoFromLibraryTimeLimit = 10.0
+        config.videoFromLibraryTimeLimit = 500.0
 //
-//        /// Adds a Crop step in the photo taking process, after filters.  Defaults to .none
+//        /// Adds a Crop step in the photo taking process, after filters. Defaults to .none
         config.showsCrop = .rectangle(ratio: (16/9))
 //
 //        /// Defines the overlay view for the camera.
@@ -102,35 +103,42 @@ class ViewController: UIViewController {
 //        overlayView.alpha = 0.3
 //        config.overlayView = overlayView
         
-        // Customize wordings
+        /// Customize wordings
         config.wordings.libraryTitle = "Gallery"
         
         /// Defines if the status bar should be hidden when showing the picker. Default is true
         config.hidesStatusBar = false
         
-        // Set it the default conf for all Pickers
-        //      YPImagePicker.setDefaultConfiguration(config)
-        // And then use the default configuration like so:
-        //      let picker = YPImagePicker()
+        config.maxNumberOfItems = 5
         
-        // Here we use a per picker configuration.
+        config.delegate = self
+        
+        // Here we use a per picker configuration. Configuration is always shared.
+        // That means than when you create one picker with configuration, than you can create other picker with just let picker = YPImagePicker() and the configuration will be the same as the first picker.
         let picker = YPImagePicker(configuration: config)
         
-        // unowned is Mandatory since it would create a retain cycle otherwise :)
-        picker.didSelectImage = { [unowned picker] img in
-            // image picked
-            print(img.size)
-            self.imageView.image = img
-            picker.dismiss(animated: true, completion: nil)
-        }
-        picker.didSelectVideo = { [unowned picker] videoData, videoThumbnailImage, url in
-            // video picked
-            self.imageView.image = videoThumbnailImage
-            picker.dismiss(animated: true, completion: nil)
-        }
-        picker.didCancel = {
-            print("Did Cancel")
-        }
+        /// Change configuration directly
+//        YPImagePickerConfiguration.shared.wordings.libraryTitle = "Gallery2"
+
         present(picker, animated: true, completion: nil)
     }
+}
+
+extension ViewController: YPImagePickerDelegate {
+    func imagePicker(_ imagePicker: YPImagePicker, didSelect items: [YPMediaItem]) {
+        imagePicker.dismiss(animated: true, completion: nil)
+        
+        _ = items.map { print("🧀 \($0)") }
+        
+        if let firstItem = items.first {
+            switch firstItem {
+            case .photo(let photo):
+                self.imageView.image = photo.image
+            case .video(let video):
+                self.imageView.image = video.thumbnail
+            }
+        }
+    }
+    
+    func imagePickerDidCancel(_ imagePicker: YPImagePicker) {}
 }

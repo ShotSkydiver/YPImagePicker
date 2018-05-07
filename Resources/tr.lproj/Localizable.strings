@@ -11,15 +11,16 @@
 "YPImagePickerVideo" = "Video";
 "YPImagePickerNext" = "İleri";
 "YPImagePickerFilter" = "Filtrele";
-"YPImagePickerVideoTooLongTitle" = "Video uzunluğu";
-"YPImagePickerVideoTooLongDetail" = "%@ saniyeden daha kısa bir video seç.";
+"YPImagePickerVideoDurationTitle" = "Video uzunluğu";
+"YPImagePickerVideoTooLong" = "%@ saniyeden daha kısa bir video seç";
 "YPImagePickerPermissionDeniedPopupTitle" = "Erişim izni reddedildi";
 "YPImagePickerPermissionDeniedPopupMessage" = "Lütfen erişime izin ver";
 "YPImagePickerPermissionDeniedPopupCancel" = "İptal";
 "YPImagePickerPermissionDeniedPopupGrantPermission" = "Erişime İzin Ver";
 
-
-
-
-
-
+"YPImagePickerOk" = "";
+"YPImagePickerCancel" = "";
+"YPImagePickerProcessing" = "..";
+"YPImagePickerAlbums" = "";
+"YPImagePickerWarningItemsLimit" = " %d ";
+"YPImagePickerVideoTooShort" = " %@ ";
