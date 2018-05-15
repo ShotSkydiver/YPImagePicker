@@ -13,16 +13,17 @@ import AVFoundation
 /// A video view that contains video layer, supports play, pause and other actions.
 /// Supports xib initialization.
 public class YPVideoView: UIView {
+    public let playImageView = UIImageView(image: nil)
+    
     internal let playerView = UIView()
     internal let playerLayer = AVPlayerLayer()
-    public let playImageView = UIImageView(image: YPConfig.icons.playImage)
     internal var previewImageView = UIImageView()
     
     public var player: AVPlayer {
         guard playerLayer.player != nil else {
-//            print("⚠️ YPVideoView >>> Problems with AVPlayer. Must not see this.")
             return AVPlayer()
         }
+        playImageView.image = YPConfig.icons.playImage
         return playerLayer.player!
     }
     
@@ -77,19 +78,6 @@ public class YPVideoView: UIView {
         player.seek(to: kCMTimeZero)
         player.play()
     }
-    
-//    public override func observeValue(forKeyPath keyPath: String?,
-//                                      of object: Any?,
-//                                      change: [NSKeyValueChangeKey : Any]?,
-//                                      context: UnsafeMutableRawPointer?) {
-//        if object is AVPlayerItem && (keyPath == "status") {
-//            if player.currentItem!.status == .readyToPlay {
-//                previewImageView.alpha = 0
-//                playerView.alpha = 1
-//                player.currentItem!.removeObserver(self, forKeyPath: "status")
-//            }
-//        }
-//    }
 }
 
 // MARK: - Video handling
@@ -99,7 +87,7 @@ extension YPVideoView {
         var player: AVPlayer
         
         switch item.self {
-        case let video as YPVideo:
+        case let video as YPMediaVideo:
             player = AVPlayer(url: video.url)
         case let url as URL:
             player = AVPlayer(url: url)
@@ -110,10 +98,6 @@ extension YPVideoView {
         }
         
         playerLayer.player = player
-//        self.player.currentItem!.addObserver(self,
-//                                            forKeyPath: "status",
-//                                            options: .new,
-//                                            context: nil)
         playerView.alpha = 1
     }
     
@@ -147,6 +131,7 @@ extension YPVideoView {
     
     public func deallocate() {
         playerLayer.player = nil
+        playImageView.image = nil
     }
 }
 

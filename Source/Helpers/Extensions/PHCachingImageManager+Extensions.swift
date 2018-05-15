@@ -17,10 +17,8 @@ extension PHCachingImageManager {
         requestAVAsset(forVideo: videoAsset, options: videosOptions) { asset, _, _ in
             do {
                 
-                func getTransform(for videoTrack: AVAssetTrack) -> CGAffineTransform {
-                    
-                    let renderSize = CGSize(width: 16 * 1 * 18,
-                                            height: 16 * 1 * 18)
+                func getTransform(for videoTrack: AVAssetTrack, with renderSize: CGSize) -> CGAffineTransform {
+                
                     let cropFrame = cropRect
                     let renderScale = renderSize.width / cropFrame.width
                     let offset = CGPoint(x: -cropFrame.origin.x, y: -cropFrame.origin.y)
@@ -42,11 +40,11 @@ extension PHCachingImageManager {
                     transform = transform.translatedBy(x: offset.x + rotationOffset.x, y: offset.y + rotationOffset.y)
                     transform = transform.rotated(by: rotation)
                     
-                    print("track size \(videoTrack.naturalSize)")
-                    print("preferred Transform = \(videoTrack.preferredTransform)")
-                    print("rotation angle \(rotation)")
-                    print("rotation offset \(rotationOffset)")
-                    print("actual Transform = \(transform)")
+//                    print("track size \(videoTrack.naturalSize)")
+//                    print("preferred Transform = \(videoTrack.preferredTransform)")
+//                    print("rotation angle \(rotation)")
+//                    print("rotation offset \(rotationOffset)")
+//                    print("actual Transform = \(transform)")
                     return transform
                 }
                 
@@ -57,16 +55,18 @@ extension PHCachingImageManager {
                 let assetComposition = AVMutableComposition()
                 let trackTimeRange = CMTimeRangeMake(kCMTimeZero, asset.duration)
                 
-                guard let videoCompositionTrack = assetComposition.addMutableTrack(withMediaType: .video,
-                                                                                   preferredTrackID: kCMPersistentTrackID_Invalid) else {
-                                                                                    return
+                guard let videoCompositionTrack = assetComposition
+                    .addMutableTrack(withMediaType: .video,
+                                     preferredTrackID: kCMPersistentTrackID_Invalid) else {
+                                        return
                 }
                 
                 try videoCompositionTrack.insertTimeRange(trackTimeRange, of: videoTrack, at: kCMTimeZero)
                 
                 if let audioTrack = asset.tracks(withMediaType: AVMediaType.audio).first {
-                    let audioCompositionTrack = assetComposition.addMutableTrack(withMediaType: AVMediaType.audio,
-                                                                                 preferredTrackID: kCMPersistentTrackID_Invalid)
+                    let audioCompositionTrack = assetComposition
+                        .addMutableTrack(withMediaType: AVMediaType.audio,
+                                         preferredTrackID: kCMPersistentTrackID_Invalid)
                     try audioCompositionTrack?.insertTimeRange(trackTimeRange, of: audioTrack, at: kCMTimeZero)
                 }
                 
@@ -77,9 +77,8 @@ extension PHCachingImageManager {
                 //2 add the layer instructions
                 let layerInstructions = AVMutableVideoCompositionLayerInstruction(assetTrack: videoCompositionTrack)
                 
-                let renderSize = CGSize(width: 16 * 1 * 18,
-                                        height: 16 * 1 * 18)
-                let transform = getTransform(for: videoTrack)
+                let renderSize = cropRect.size
+                let transform = getTransform(for: videoTrack, with: renderSize)
                 
                 layerInstructions.setTransform(transform, at: kCMTimeZero)
                 layerInstructions.setOpacity(1.0, at: kCMTimeZero)
@@ -95,7 +94,8 @@ extension PHCachingImageManager {
                 let url = URL(fileURLWithPath: "\(NSTemporaryDirectory())TrimmedMovie.mp4")
                 try? FileManager.default.removeItem(at: url)
                 
-                let exportSession = AVAssetExportSession(asset: assetComposition, presetName: AVAssetExportPresetHighestQuality)
+                let exportSession = AVAssetExportSession(asset: assetComposition,
+                                                         presetName: AVAssetExportPresetHighestQuality)
                 exportSession?.outputFileType = AVFileType.mp4
                 exportSession?.shouldOptimizeForNetworkUse = true
                 exportSession?.videoComposition = videoComposition
@@ -103,7 +103,6 @@ extension PHCachingImageManager {
                 exportSession?.exportAsynchronously(completionHandler: {
                     
                     DispatchQueue.main.async {
-                        
                         if let url = exportSession?.outputURL, exportSession?.status == .completed {
                             callback(url)
                         } else {
@@ -112,18 +111,6 @@ extension PHCachingImageManager {
                         }
                     }
                 })
-                
-                
-                
-//                if let (videoComposition, assetComposition) = try asset?.getCropVideoComposition(cropRectFrame: cropRect) {
-//                    let destinationURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingUniquePathComponent(pathExtension: YPConfig.videoExtension.fileExtension)
-//                    try assetComposition.export(to: destinationURL,
-//                                                videoComposition: videoComposition,
-//                                                removeOldFile: false) {
-//                                                    callback(destinationURL)
-//                                                    print("\r 👍\r")
-//                    }
-//                }
             } catch let error {
                 print("💩 \(error)")
             }
@@ -143,8 +130,8 @@ extension PHCachingImageManager {
         let options = photoImageRequestOptions()
     
         // Fetch Highiest quality image possible.
-        requestImageData(for: asset, options: options) { (data, string, orientation, info) in
-            if let data = data , let image = UIImage(data: data)?.resetOrientation() {
+        requestImageData(for: asset, options: options) { data, _, _, _ in
+            if let data = data, let image = UIImage(data: data)?.resetOrientation() {
             
                 // Crop the high quality image manually.
                 let xCrop: CGFloat = cropRect.origin.x * CGFloat(asset.pixelWidth)
@@ -189,8 +176,9 @@ extension PHCachingImageManager {
         })
     }
     
-    /// This method return two images in the callback. First is with low resolution, second with high. So the callback fires twice. But with isSynchronous = true there is only one high resolution image.
-    // Bool = isFromCloud
+    /// This method return two images in the callback. First is with low resolution, second with high.
+    /// So the callback fires twice. But with isSynchronous = true there is only one high resolution image.
+    /// Bool = isFromCloud
     func fetch(photo asset: PHAsset, callback: @escaping (UIImage, Bool) -> Void) {
         let options = PHImageRequestOptions()
         options.isNetworkAccessAllowed = true

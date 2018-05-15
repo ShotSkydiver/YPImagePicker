@@ -37,6 +37,16 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     
     func setAlbum(_ album: YPAlbum) {
         mediaManager.collection = album.collection
+        resetMultipleSelection()
+    }
+    
+    private func resetMultipleSelection() {
+        selection.removeAll()
+        currentlySelectedIndex = 0
+        multipleSelectionEnabled = false
+        v.assetViewContainer.setMultipleSelectionMode(on: false)
+        delegate?.libraryViewDidToggleMultipleSelection(enabled: false)
+        checkLimit()
     }
     
     func initialize() {
@@ -89,9 +99,11 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                        for: .touchUpInside)
         
         // Forces assetZoomableView to have a contentSize.
-        // otherwise 0 in first selection triggering the bug :
-        // "invalid image size 0x0"
-        v.assetZoomableView.setZoomScale(1, animated: false)
+        // otherwise 0 in first selection triggering the bug : "invalid image size 0x0"
+        // Also fits the first element to the square if the onlySquareFromLibrary = true
+        if !YPConfig.onlySquareFromLibrary && v.assetZoomableView.contentSize == CGSize(width: 0, height: 0) {
+            v.assetZoomableView.setZoomScale(1, animated: false)
+        }
     }
     
     public override func viewWillDisappear(_ animated: Bool) {
@@ -243,14 +255,18 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         DispatchQueue.global(qos: .userInitiated).async {
             switch asset.mediaType {
             case .image:
-                self.v.assetZoomableView.setImage(asset, mediaManager: self.mediaManager, storedCropPosition: self.fetchStoredCrop()) {
+                self.v.assetZoomableView.setImage(asset,
+                                                  mediaManager: self.mediaManager,
+                                                  storedCropPosition: self.fetchStoredCrop()) {
                     self.v.hideLoader()
                     self.v.hideGrid()
                     self.delegate?.libraryViewFinishedLoading()
                     self.v.assetViewContainer.refreshSquareCropButton()
                 }
             case .video:
-                self.v.assetZoomableView.setVideo(asset, mediaManager: self.mediaManager, storedCropPosition: self.fetchStoredCrop()) {
+                self.v.assetZoomableView.setVideo(asset,
+                                                  mediaManager: self.mediaManager,
+                                                  storedCropPosition: self.fetchStoredCrop()) {
                     self.v.hideLoader()
                     self.v.hideGrid()
                     self.delegate?.libraryViewFinishedLoading()
@@ -308,7 +324,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     internal func fetchStoredCrop() -> YPLibrarySelection? {
         if self.multipleSelectionEnabled,
             self.selection.contains(where: { $0.index == self.currentlySelectedIndex }) {
-            guard let selectedAssetIndex = self.selection.index(where: { $0.index == self.currentlySelectedIndex }) else {
+            guard let selectedAssetIndex = self.selection
+                .index(where: { $0.index == self.currentlySelectedIndex }) else {
                 return nil
             }
             return self.selection[selectedAssetIndex]
@@ -344,7 +361,6 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                                         y: yCrop,
                                         width: ts.width,
                                         height: ts.height)
-            
             mediaManager.imageManager?.fetchUrl(for: asset, cropRect: resultCropRect, callback: callback)
         }
     }
@@ -378,7 +394,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                     case .image:
                         self.fetchImage(for: asset.asset, withCropRect: asset.cropRect) { image in
                             let resizedImage = self.resizedImageIfNeeded(image: image)
-                            let photo = YPPhoto(image: resizedImage)
+                            let photo = YPMediaPhoto(image: resizedImage)
                             resultMediaItems.append(YPMediaItem.photo(p: photo))
                             asyncGroup.leave()
                         }
@@ -436,14 +452,33 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     // Reduce image size further if needed libraryTargetImageSize is capped.
     func resizedImageIfNeeded(image: UIImage) -> UIImage {
         if case let YPLibraryImageSize.cappedTo(size: capped) = YPConfig.libraryTargetImageSize {
-            let cappedWidth = min(image.size.width, capped)
-            let cappedHeight = min(image.size.height, capped)
-            let cappedSize = CGSize(width: cappedWidth, height: cappedHeight)
-            if let resizedImage = image.resized(to: cappedSize) {
+            let size = cappedSize(for: image.size, cappedAt: capped)
+            if let resizedImage = image.resized(to: size) {
                 return resizedImage
             }
         }
         return image
+    }
+    
+    private func cappedSize(for size: CGSize, cappedAt: CGFloat) -> CGSize {
+        var cappedWidth: CGFloat = 0
+        var cappedHeight: CGFloat = 0
+        if size.width > size.height {
+            // Landscape
+            let heightRatio = size.height / size.width
+            cappedWidth = min(size.width, cappedAt)
+            cappedHeight = cappedWidth * heightRatio
+        } else if size.height > size.width {
+            // Portrait
+            let widthRatio = size.width / size.height
+            cappedHeight = min(size.height, cappedAt)
+            cappedWidth = cappedHeight * widthRatio
+        } else {
+            // Squared
+            cappedWidth = min(size.width, cappedAt)
+            cappedHeight = min(size.height, cappedAt)
+        }
+        return CGSize(width: cappedWidth, height: cappedHeight)
     }
     
     // MARK: - Player

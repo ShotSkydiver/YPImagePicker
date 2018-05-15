@@ -63,7 +63,7 @@ class ViewController: UIViewController {
 //        config.filters = [YPFilterDescriptor(name: "Normal", filterName: ""),
 //                          YPFilterDescriptor(name: "Mono", filterName: "CIPhotoEffectMono")]
         config.filters.remove(at: 1)
-        config.filters.insert(YPFilterDescriptor(name: "Blur" , filterName: "CIBoxBlur"), at: 1)
+        config.filters.insert(YPFilterDescriptor(name: "Blur", filterName: "CIBoxBlur"), at: 1)
 //
 //        /// Enables you to opt out from saving new (or old but filtered) images to the
 //        /// user's photo library. Defaults to true.
@@ -111,34 +111,41 @@ class ViewController: UIViewController {
         
         config.maxNumberOfItems = 5
         
-        config.delegate = self
-        
         // Here we use a per picker configuration. Configuration is always shared.
-        // That means than when you create one picker with configuration, than you can create other picker with just let picker = YPImagePicker() and the configuration will be the same as the first picker.
+        // That means than when you create one picker with configuration, than you can create other picker with just
+        // let picker = YPImagePicker() and the configuration will be the same as the first picker.
         let picker = YPImagePicker(configuration: config)
         
         /// Change configuration directly
 //        YPImagePickerConfiguration.shared.wordings.libraryTitle = "Gallery2"
-
+        
+        // Single Photo implementation.
+        picker.didFinishPicking { items, cancelled in
+            self.imageView.image = items.singlePhoto?.image
+            picker.dismiss(animated: true, completion: nil)
+        }
+        
+        // Single Video implementation.
+        picker.didFinishPicking { items, cancelled in
+            self.imageView.image = items.singleVideo?.thumbnail
+            picker.dismiss(animated: true, completion: nil)
+        }
+        
+        // Multiple implementation
+        picker.didFinishPicking { items, cancelled in
+            _ = items.map { print("🧀 \($0)") }
+            if let firstItem = items.first {
+                switch firstItem {
+                case .photo(let photo):
+                    self.imageView.image = photo.image
+                case .video(let video):
+                    self.imageView.image = video.thumbnail
+                }
+            }
+            picker.dismiss(animated: true, completion: nil)
+        }
+        
         present(picker, animated: true, completion: nil)
     }
 }
 
-extension ViewController: YPImagePickerDelegate {
-    func imagePicker(_ imagePicker: YPImagePicker, didSelect items: [YPMediaItem]) {
-        imagePicker.dismiss(animated: true, completion: nil)
-        
-        _ = items.map { print("🧀 \($0)") }
-        
-        if let firstItem = items.first {
-            switch firstItem {
-            case .photo(let photo):
-                self.imageView.image = photo.image
-            case .video(let video):
-                self.imageView.image = video.thumbnail
-            }
-        }
-    }
-    
-    func imagePickerDidCancel(_ imagePicker: YPImagePicker) {}
-}
