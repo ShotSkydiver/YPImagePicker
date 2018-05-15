@@ -18,9 +18,6 @@ public struct YPImagePickerConfiguration {
     
     public init() {}
     
-    /// The delegate needs to get selected photo and video. It's duplicate a callback functional, but the callback doesn't support multiple selection.
-    public weak var delegate: YPImagePickerDelegate?
-    
     /// Use this property to modify the default wordings provided.
     public var wordings = YPWordings()
     
@@ -29,6 +26,10 @@ public struct YPImagePickerConfiguration {
     
     /// Use this property to modify the default colors provided.
     public var colors = YPColors()
+    
+    /// Set this to true if you want to force the library output to be a squared image. Defaults to false
+    @available(*, obsoleted: 3.0.0, renamed: "onlySquareFromLibrary")
+    public var onlySquareImagesFromLibrary = false
     
     /// Set this to true if you want to force the library output to be a squared image. Defaults to false
     public var onlySquareFromLibrary = false
@@ -86,7 +87,8 @@ public struct YPImagePickerConfiguration {
     /// The maximum duration allowed for the trimming. Change it before setting the asset, as the asset preview
     public var trimmerMaxDuration: Double = 60.0
     
-    /// The minimum duration allowed for the trimming. The handles won't pan further if the minimum duration is attained.
+    /// The minimum duration allowed for the trimming.
+    /// The handles won't pan further if the minimum duration is attained.
     public var trimmerMinDuration: Double = 3.0
 
     /// Adds a Crop step in the photo taking process, after filters.  Defaults to .none

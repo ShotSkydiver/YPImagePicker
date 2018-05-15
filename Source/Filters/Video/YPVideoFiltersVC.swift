@@ -21,7 +21,7 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
     @IBOutlet weak var coverImageView: UIImageView!
     @IBOutlet weak var coverThumbSelectorView: ThumbSelectorView!
 
-    public var inputVideo: YPVideo!
+    public var inputVideo: YPMediaVideo!
     public var inputAsset: AVAsset { return AVAsset(url: inputVideo.url) }
     
     private var playbackTimeCheckerTimer: Timer?
@@ -32,7 +32,7 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
     var didCancel: (() -> Void)?
 
     /// Designated initializer
-    public class func initWith(video: YPVideo,
+    public class func initWith(video: YPMediaVideo,
                                isFromSelectionVC: Bool) -> YPVideoFiltersVC {
         let vc = YPVideoFiltersVC(nibName: "YPVideoFiltersVC", bundle: Bundle(for: YPVideoFiltersVC.self))
         vc.inputVideo = video
@@ -72,7 +72,7 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         didChangeThumbPosition(CMTime(seconds: 1, preferredTimescale: 1))
         
         // Navigation bar setup
-        title = YPConfig.wordings.filter
+        title = YPConfig.wordings.trim
         navigationController?.navigationBar.tintColor = YPConfig.colors.navigationBarTextColor
         if isFromSelectionVC {
             navigationItem.leftBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.cancel,
@@ -80,7 +80,7 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
                                                                target: self,
                                                                action: #selector(cancel))
         }
-        let rightBarButtonTitle = isFromSelectionVC ? YPConfig.wordings.save : YPConfig.wordings.next
+        let rightBarButtonTitle = isFromSelectionVC ? YPConfig.wordings.done : YPConfig.wordings.next
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: rightBarButtonTitle,
                                                             style: .plain,
                                                             target: self,
@@ -101,13 +101,13 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         super.viewDidAppear(animated)
     }
     
-    @objc
-    func cancel() {
-        didCancel?()
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        stopPlaybackTimeChecker()
+        videoView.stop()
     }
     
-    @objc
-    public func save() {
+    @objc public func save() {
         guard let didSave = didSave else { return print("Don't have saveCallback") }
         YPLoaders.enableActivityIndicator(barButtonItem: &self.navigationItem.rightBarButtonItem)
 
@@ -117,14 +117,16 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
                 .assetByTrimming(startTime: trimmerView.startTime ?? kCMTimeZero,
                                  endTime: trimmerView.endTime ?? inputAsset.duration)
             
-            // Looks like file:///private/var/mobile/Containers/Data/Application/FAD486B4-784D-4397-B00C-AD0EFFB45F52/tmp/8A2B410A-BD34-4E3F-8CB5-A548A946C1F1.mov
-            let destinationURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingUniquePathComponent(pathExtension: YPConfig.videoExtension.fileExtension)
+            // Looks like file:///private/var/mobile/Containers/Data/Application
+            // /FAD486B4-784D-4397-B00C-AD0EFFB45F52/tmp/8A2B410A-BD34-4E3F-8CB5-A548A946C1F1.mov
+            let destinationURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingUniquePathComponent(pathExtension: YPConfig.videoExtension.fileExtension)
             
             try trimmedAsset.export(to: destinationURL) { [weak self] in
                 guard let weakSelf = self else { return }
                 
                 DispatchQueue.main.async {
-                    let resultVideo = YPVideo(thumbnail: weakSelf.coverImageView.image!,
+                    let resultVideo = YPMediaVideo(thumbnail: weakSelf.coverImageView.image!,
                                               videoURL: destinationURL)
                     didSave(YPMediaItem.video(v: resultVideo))
                 }
@@ -132,6 +134,10 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         } catch let error {
             print("💩 \(error)")
         }
+    }
+    
+    @objc func cancel() {
+        didCancel?()
     }
     
     // MARK: Bottom buttons
@@ -211,16 +217,14 @@ extension YPVideoFiltersVC: TrimmerViewDelegate {
         stopPlaybackTimeChecker()
         videoView.pause()
         videoView.player.seek(to: playerTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero)
-        let duration = (trimmerView.endTime! - trimmerView.startTime!).seconds
-        print(duration)
     }
 }
 
 // MARK: - ThumbSelectorViewDelegate
 extension YPVideoFiltersVC: ThumbSelectorViewDelegate {
     public func didChangeThumbPosition(_ imageTime: CMTime) {
-        let imageRef = try! imageGenerator?.copyCGImage(at: imageTime, actualTime: nil)
-        if let imageRef = imageRef {
+        if let imageGenerator = imageGenerator,
+            let imageRef = try? imageGenerator.copyCGImage(at: imageTime, actualTime: nil) {
             coverImageView.image = UIImage(cgImage: imageRef)
         }
     }

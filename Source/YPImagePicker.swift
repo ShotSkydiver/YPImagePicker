@@ -11,6 +11,40 @@ import AVFoundation
 
 public class YPImagePicker: UINavigationController {
     
+    @available(*, deprecated, message: "Use didFinishPicking callback instead")
+    public var didSelectImage: ((UIImage) -> Void)?
+    @available(*, deprecated, message: "Use didFinishPicking callback instead")
+    public var didSelectVideo: ((Data, UIImage, URL) -> Void)?
+    
+    @available(*, deprecated, message: "Use didFinishPicking callback instead")
+    public var didCancel: (() -> Void)?
+    
+    
+    private var _didFinishPicking: (([YPMediaItem], Bool) -> Void)?
+    public func didFinishPicking(completion: @escaping (_ items: [YPMediaItem], _ cancelled: Bool) -> Void) {
+        _didFinishPicking = completion
+    }
+    
+    
+    // This nifty little trick enables us to call the single version of the callbacks.
+    // This keeps the backwards compatibility keeps the api as simple as possible.
+    // Multiple selection becomes available as an opt-in.
+    private func didSelect(items: [YPMediaItem]) -> Void {
+        if items.count == 1 {
+            if let didSelectImage = didSelectImage, let first = items.first, case let .photo(pickedPhoto) = first {
+                didSelectImage(pickedPhoto.image)
+            } else if let didSelectVideo = didSelectVideo, let first = items.first, case let .video(pickedVideo) = first {
+                pickedVideo.fetchData { videoData in
+                    didSelectVideo(videoData, pickedVideo.thumbnail, pickedVideo.url)
+                }
+            } else {
+                _didFinishPicking?(items, false)
+            }
+        } else {
+            _didFinishPicking?(items, false)
+        }
+    }
+    
     let loadingView = YPLoadingView()
     private let picker: YPPickerVC!
     
@@ -32,9 +66,9 @@ public class YPImagePicker: UINavigationController {
     
     override public func viewDidLoad() {
         super.viewDidLoad()
-        
-        picker.didClose = {
-            YPConfig.delegate?.imagePickerDidCancel(self)
+        picker.didClose = { [weak self] in
+            self?.didCancel?()
+            self?._didFinishPicking?([], true)
         }
         viewControllers = [picker]
         setupLoadingView()
@@ -52,8 +86,10 @@ public class YPImagePicker: UINavigationController {
             
             // Multiple items flow
             if items.count > 1 {
-                let selectionsGalleryVC = YPSelectionsGalleryVC.initWith(items: items,
-                                                                         imagePicker: self)
+                let selectionsGalleryVC = YPSelectionsGalleryVC.initWith(items: items)
+                selectionsGalleryVC.didFinishWithItems = { items in
+                    self.didSelect(items: items)
+                }
                 self.pushViewController(selectionsGalleryVC, animated: true)
                 return
             }
@@ -63,21 +99,26 @@ public class YPImagePicker: UINavigationController {
             
             switch item {
             case .photo(let photo):
-                // TODO: Save new photo ?
-                let completion = { (image: UIImage) in
-                    let mediaItem = YPMediaItem.photo(p: YPPhoto(image: image))
-                    YPConfig.delegate?.imagePicker(self, didSelect: [mediaItem])
+                
+                let completion = { (photo: YPMediaPhoto) in
+                    let mediaItem = YPMediaItem.photo(p: photo)
+                    // Save new image to the photo album.
+                    if YPConfig.shouldSaveNewPicturesToAlbum, let modifiedImage = photo.modifiedImage {
+                        YPPhotoSaver.trySaveImage(modifiedImage, inAlbumNamed: YPConfig.albumName)
+                    }
+                    self.didSelect(items: [mediaItem])
                 }
                 
-                func showCropVC(photo: YPPhoto, completion: @escaping (_ image: UIImage) -> Void) {
+                func showCropVC(photo: YPMediaPhoto, completion: @escaping (_ aphoto: YPMediaPhoto) -> Void) {
                     if case let YPCropType.rectangle(ratio) = YPConfig.showsCrop {
                         let cropVC = YPCropVC(image: photo.image, ratio: ratio)
                         cropVC.didFinishCropping = { croppedImage in
-                            completion(croppedImage)
+                            photo.modifiedImage = croppedImage
+                            completion(photo)
                         }
                         self.pushViewController(cropVC, animated: true)
                     } else {
-                        completion(photo.image)
+                        completion(photo)
                     }
                 }
                 
@@ -99,11 +140,11 @@ public class YPImagePicker: UINavigationController {
                     let videoFiltersVC = YPVideoFiltersVC.initWith(video: video,
                                                                    isFromSelectionVC: false)
                     videoFiltersVC.didSave = { [unowned self] outputMedia in
-                        YPConfig.delegate?.imagePicker(self, didSelect: [outputMedia])
+                        self.didSelect(items: [outputMedia])
                     }
                     self.pushViewController(videoFiltersVC, animated: true)
                 } else {
-                    YPConfig.delegate?.imagePicker(self, didSelect: [YPMediaItem.video(v: video)])
+                    self.didSelect(items: [YPMediaItem.video(v: video)])
                 }
             }
         }
@@ -115,5 +156,22 @@ public class YPImagePicker: UINavigationController {
         )
         loadingView.fillContainer()
         loadingView.alpha = 0
+    }
+}
+
+public extension Array where Element == YPMediaItem {
+    
+    public var singlePhoto: YPMediaPhoto? {
+        if let f = first, case let .photo(p) = f {
+            return p
+        }
+        return nil
+    }
+    
+    public var singleVideo: YPMediaVideo? {
+        if let f = first, case let .video(v) = f {
+            return v
+        }
+        return nil
     }
 }
