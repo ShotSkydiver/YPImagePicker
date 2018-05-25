@@ -15,25 +15,24 @@ public class YPImagePicker: UINavigationController {
     public var didSelectImage: ((UIImage) -> Void)?
     @available(*, deprecated, message: "Use didFinishPicking callback instead")
     public var didSelectVideo: ((Data, UIImage, URL) -> Void)?
-    
     @available(*, deprecated, message: "Use didFinishPicking callback instead")
     public var didCancel: (() -> Void)?
-    
     
     private var _didFinishPicking: (([YPMediaItem], Bool) -> Void)?
     public func didFinishPicking(completion: @escaping (_ items: [YPMediaItem], _ cancelled: Bool) -> Void) {
         _didFinishPicking = completion
     }
     
-    
     // This nifty little trick enables us to call the single version of the callbacks.
     // This keeps the backwards compatibility keeps the api as simple as possible.
     // Multiple selection becomes available as an opt-in.
-    private func didSelect(items: [YPMediaItem]) -> Void {
+    private func didSelect(items: [YPMediaItem]) {
         if items.count == 1 {
-            if let didSelectImage = didSelectImage, let first = items.first, case let .photo(pickedPhoto) = first {
+            if let didSelectImage = didSelectImage, let first = items.first,
+                case let .photo(pickedPhoto) = first {
                 didSelectImage(pickedPhoto.image)
-            } else if let didSelectVideo = didSelectVideo, let first = items.first, case let .video(pickedVideo) = first {
+            } else if let didSelectVideo = didSelectVideo, let first = items.first,
+                case let .video(pickedVideo) = first {
                 pickedVideo.fetchData { videoData in
                     didSelectVideo(videoData, pickedVideo.thumbnail, pickedVideo.url)
                 }
@@ -86,8 +85,7 @@ public class YPImagePicker: UINavigationController {
             
             // Multiple items flow
             if items.count > 1 {
-                let selectionsGalleryVC = YPSelectionsGalleryVC.initWith(items: items)
-                selectionsGalleryVC.didFinishWithItems = { items in
+                let selectionsGalleryVC = YPSelectionsGalleryVC.initWith(items: items) { gallery, items in
                     self.didSelect(items: items)
                 }
                 self.pushViewController(selectionsGalleryVC, animated: true)
@@ -96,10 +94,8 @@ public class YPImagePicker: UINavigationController {
             
             // One item flow
             let item = items.first!
-            
             switch item {
             case .photo(let photo):
-                
                 let completion = { (photo: YPMediaPhoto) in
                     let mediaItem = YPMediaItem.photo(p: photo)
                     // Save new image to the photo album.
@@ -148,6 +144,15 @@ public class YPImagePicker: UINavigationController {
                 }
             }
         }
+        
+        // If user has not customized the Nav Bar tintColor, then use black.
+        if UINavigationBar.appearance().tintColor == nil {
+            UINavigationBar.appearance().tintColor  = .black
+        }
+    }
+    
+    deinit {
+        print("Picker deinited 👍")
     }
     
     private func setupLoadingView() {
@@ -156,22 +161,5 @@ public class YPImagePicker: UINavigationController {
         )
         loadingView.fillContainer()
         loadingView.alpha = 0
-    }
-}
-
-public extension Array where Element == YPMediaItem {
-    
-    public var singlePhoto: YPMediaPhoto? {
-        if let f = first, case let .photo(p) = f {
-            return p
-        }
-        return nil
-    }
-    
-    public var singleVideo: YPMediaVideo? {
-        if let f = first, case let .video(v) = f {
-            return v
-        }
-        return nil
     }
 }

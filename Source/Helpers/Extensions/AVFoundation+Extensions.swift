@@ -32,7 +32,7 @@ public func createVideoItem(videoURL: URL,
             let asset = AVURLAsset(url: videoURL)
             
             let exportSession = AVAssetExportSession(asset: asset,
-                                                     presetName: YPConfig.videoCompression)
+                                                     presetName: YPConfig.video.compression)
             exportSession?.outputURL = uploadURL
             exportSession?.outputFileType = AVFileType.mov
             exportSession?.shouldOptimizeForNetworkUse = true
@@ -45,7 +45,8 @@ public func createVideoItem(videoURL: URL,
                     }
                 default:
                     DispatchQueue.main.async {
-                        print("⚠️ createVideoItem >>> Error in creating the video item. Export status: \(exportSession!.status)")
+                        print("⚠️ createVideoItem >>> Error in creating the video item."
+                            + "Export status: \(exportSession!.status)")
                         activityIdicatorClosure?(false)
                         completion(videoItem)
                     }

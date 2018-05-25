@@ -9,7 +9,7 @@
 import UIKit
 
 extension YPLibraryVC {
-    var isLimitExceeded: Bool { return selection.count >= YPConfig.maxNumberOfItems }
+    var isLimitExceeded: Bool { return selection.count >= YPConfig.library.maxNumberOfItems }
     
     func setupCollectionView() {
         v.collectionView.dataSource = self
@@ -24,7 +24,7 @@ extension YPLibraryVC {
     
     /// When tapping on the cell with long press, clear all previously selected cells.
     @objc func handleLongPress(longPressGR: UILongPressGestureRecognizer) {
-        if multipleSelectionEnabled {
+        if multipleSelectionEnabled || isProcessing || YPConfig.library.maxNumberOfItems <= 1 {
             return
         }
         
@@ -100,6 +100,7 @@ extension YPLibraryVC: UICollectionViewDelegate {
         }
         cell.representedAssetIdentifier = asset.localIdentifier
         cell.multipleSelectionIndicator.selectionColor = YPConfig.colors.multipleItemsSelectedCircleColor
+                                                            ?? YPConfig.colors.tintColor
         mediaManager.imageManager?.requestImage(for: asset,
                                    targetSize: v.cellSize(),
                                    contentMode: .aspectFill,
@@ -172,6 +173,14 @@ extension YPLibraryVC: UICollectionViewDelegate {
         
         collectionView.reloadItems(at: [indexPath])
         collectionView.reloadItems(at: [previouslySelectedIndexPath])
+    }
+    
+    public func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        return isProcessing == false
+    }
+    
+    public func collectionView(_ collectionView: UICollectionView, shouldDeselectItemAt indexPath: IndexPath) -> Bool {
+        return isProcessing == false
     }
 }
 

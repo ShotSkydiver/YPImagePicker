@@ -21,6 +21,7 @@ final class YPLibraryView: UIView {
     
     let maxNumberWarningView = UIView()
     let maxNumberWarningLabel = UILabel()
+    let progressView = UIProgressView()
     let line = UIView()
     
     override func awakeFromNib() {
@@ -38,10 +39,11 @@ final class YPLibraryView: UIView {
         line.backgroundColor = .white
         
         setupMaxNumberOfItemsView()
+        setupProgressBarView()
     }
     
+    /// At the bottom there is a view that is visible when selected a limit of items with multiple selection
     func setupMaxNumberOfItemsView() {
-        
         // View Hierarchy
         sv(
             maxNumberWarningView.sv(
@@ -64,6 +66,22 @@ final class YPLibraryView: UIView {
         maxNumberWarningLabel.font = UIFont(name: "Helvetica Neue", size: 14)
         maxNumberWarningView.isHidden = true
     }
+    
+    /// When video is processing this bar appears
+    func setupProgressBarView() {
+        sv(
+            progressView
+        )
+        
+        progressView.height(5)
+        progressView.Top == line.Top
+        progressView.Width == line.Width
+        progressView.progressViewStyle = .bar
+        progressView.trackTintColor = YPConfig.colors.progressBarTrackColor
+        progressView.progressTintColor = YPConfig.colors.progressBarCompletedColor ?? YPConfig.colors.tintColor
+        progressView.isHidden = true
+        progressView.isUserInteractionEnabled = false
+    }
 }
 
 // MARK: - UI Helpers
@@ -84,7 +102,7 @@ extension YPLibraryView {
         assetViewContainer.grid.alpha = 0
     }
     
-    // MARK: - Loader
+    // MARK: - Loader and progress
     
     func fadeInLoader() {
         UIView.animate(withDuration: 0.2) {
@@ -96,14 +114,20 @@ extension YPLibraryView {
         assetViewContainer.spinnerView.alpha = 0
     }
     
+    func updateProgress(_ progress: Float) {
+        progressView.isHidden = progress > 0.99 || progress == 0
+        progressView.progress = progress
+        UIView.animate(withDuration: 0.1, animations: progressView.layoutIfNeeded)
+    }
+    
     // MARK: - Crop Rect
     
     func currentCropRect() -> CGRect {
         guard let cropView = assetZoomableView else {
             return CGRect.zero
         }
-        let normalizedX = min(1, cropView.contentOffset.x / cropView.contentSize.width)
-        let normalizedY = min(1, cropView.contentOffset.y / cropView.contentSize.height)
+        let normalizedX = min(1, cropView.contentOffset.x &/ cropView.contentSize.width)
+        let normalizedY = min(1, cropView.contentOffset.y &/ cropView.contentSize.height)
         let normalizedWidth = min(1, cropView.frame.width / cropView.contentSize.width)
         let normalizedHeight = min(1, cropView.frame.height / cropView.contentSize.height)
         return CGRect(x: normalizedX, y: normalizedY, width: normalizedWidth, height: normalizedHeight)

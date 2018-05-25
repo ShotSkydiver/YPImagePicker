@@ -11,20 +11,21 @@ import UIKit
 // TODO: Add paging to collection view
 
 public class YPSelectionsGalleryVC: UIViewController {
-    
-    public var didFinishWithItems: (([YPMediaItem]) -> Void)?
-    
-    /// Designated initializer
-    public class func initWith(items: [YPMediaItem]) -> YPSelectionsGalleryVC {
-        let vc = YPSelectionsGalleryVC(nibName: "YPSelectionsGalleryVC",
-                                       bundle: Bundle(for: YPSelectionsGalleryVC.self))
-        vc.items = items
-        return vc
-    }
-
     @IBOutlet weak var collectionV: UICollectionView!
 
     public var items: [YPMediaItem] = []
+    public var didFinishHandler: ((_ gallery: YPSelectionsGalleryVC, _ items: [YPMediaItem]) -> Void)?
+
+    /// Designated initializer
+    public class func initWith(items: [YPMediaItem],
+                               didFinishHandler:
+        @escaping ((_ gallery: YPSelectionsGalleryVC, _ items: [YPMediaItem]) -> Void)) -> YPSelectionsGalleryVC {
+        let vc = YPSelectionsGalleryVC(nibName: "YPSelectionsGalleryVC",
+                                       bundle: Bundle(for: YPSelectionsGalleryVC.self))
+        vc.items = items
+        vc.didFinishHandler = didFinishHandler
+        return vc
+    }
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -36,9 +37,11 @@ public class YPSelectionsGalleryVC: UIViewController {
         
         // Setup navigation bar
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.next,
-                                                            style: .plain,
+                                                            style: .done,
                                                             target: self,
                                                             action: #selector(done))
+        navigationItem.rightBarButtonItem?.tintColor = YPConfig.colors.tintColor
+        
         YPHelper.changeBackButtonIcon(self)
         YPHelper.changeBackButtonTitle(self)
     }
@@ -53,7 +56,7 @@ public class YPSelectionsGalleryVC: UIViewController {
                 }
             }
         }
-        didFinishWithItems?(items)
+        didFinishHandler?(self, items)
     }
 }
 

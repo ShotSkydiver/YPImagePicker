@@ -19,8 +19,6 @@ class YPAlbumsManager {
     
     private var cachedAlbums: [YPAlbum]?
     
-    var noVideos = false
-    
     func fetchAlbums() -> [YPAlbum] {
         if let cachedAlbums = cachedAlbums {
             return cachedAlbums
@@ -28,17 +26,19 @@ class YPAlbumsManager {
         
         var albums = [YPAlbum]()
         let options = PHFetchOptions()
-                
-        let smartAlbumsResult = PHAssetCollection
-            .fetchAssetCollections(with: .smartAlbum, subtype: .any, options: options)
-        let albumsResult = PHAssetCollection
-            .fetchAssetCollections(with: .album, subtype: .any, options: options) //(synced only?)
+        
+        let smartAlbumsResult = PHAssetCollection.fetchAssetCollections(with: .smartAlbum,
+                                                                        subtype: .any,
+                                                                        options: options)
+        let albumsResult = PHAssetCollection.fetchAssetCollections(with: .album,
+                                                                   subtype: .any,
+                                                                   options: options)
         for result in [smartAlbumsResult, albumsResult] {
             result.enumerateObjects({ assetCollection, _, _ in
                 var album = YPAlbum()
                 album.title = assetCollection.localizedTitle ?? ""
-                album.numberOfPhotos = self.mediaCountFor(collection: assetCollection)
-                if album.numberOfPhotos > 0 {
+                album.numberOfItems = self.mediaCountFor(collection: assetCollection)
+                if album.numberOfItems > 0 {
                     let r = PHAsset.fetchKeyAssets(in: assetCollection, options: nil)
                     if let first = r?.firstObject {
                         let targetSize = CGSize(width: 78*2, height: 78*2)
@@ -54,7 +54,8 @@ class YPAlbumsManager {
                         })
                     }
                     album.collection = assetCollection
-                    if self.noVideos {
+                    
+                    if YPConfig.library.mediaType == .photo {
                         if !(assetCollection.assetCollectionSubtype == .smartAlbumSlomoVideos
                             || assetCollection.assetCollectionSubtype == .smartAlbumVideos) {
                             albums.append(album)
@@ -71,10 +72,26 @@ class YPAlbumsManager {
     
     func mediaCountFor(collection: PHAssetCollection) -> Int {
         let options = PHFetchOptions()
-        if noVideos {
-            options.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-        }
+        options.predicate = YPConfig.library.mediaType.predicate()
         let result = PHAsset.fetchAssets(in: collection, options: options)
         return result.count
+    }
+    
+}
+
+extension YPlibraryMediaType {
+    func predicate() -> NSPredicate {
+        switch self {
+        case .photo:
+            return NSPredicate(format: "mediaType = %d",
+                               PHAssetMediaType.image.rawValue)
+        case .video:
+            return NSPredicate(format: "mediaType = %d",
+                               PHAssetMediaType.video.rawValue)
+        case .photoAndVideo:
+            return NSPredicate(format: "mediaType = %d || mediaType = %d",
+                               PHAssetMediaType.image.rawValue,
+                               PHAssetMediaType.video.rawValue)
+        }
     }
 }

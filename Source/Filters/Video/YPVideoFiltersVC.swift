@@ -41,16 +41,18 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         return vc
     }
     
+    // MARK: - Live cycle
+
     override public func viewDidLoad() {
         super.viewDidLoad()
 
         trimmerView.mainColor = YPConfig.colors.trimmerMainColor
         trimmerView.handleColor = YPConfig.colors.trimmerHandleColor
         trimmerView.positionBarColor = YPConfig.colors.positionLineColor
-        trimmerView.maxDuration = YPConfig.trimmerMaxDuration
-        trimmerView.minDuration = YPConfig.trimmerMinDuration
+        trimmerView.maxDuration = YPConfig.video.trimmerMaxDuration
+        trimmerView.minDuration = YPConfig.video.trimmerMinDuration
         
-        coverThumbSelectorView.thumbBorderColor = YPConfig.colors.coverSelectorColor
+        coverThumbSelectorView.thumbBorderColor = YPConfig.colors.coverSelectorBorderColor
         
         trimBottomItem.textLabel.text = YPConfig.wordings.trim
         coverBottomItem.textLabel.text = YPConfig.wordings.cover
@@ -73,7 +75,6 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         
         // Navigation bar setup
         title = YPConfig.wordings.trim
-        navigationController?.navigationBar.tintColor = YPConfig.colors.navigationBarTextColor
         if isFromSelectionVC {
             navigationItem.leftBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.cancel,
                                                                style: .plain,
@@ -82,9 +83,11 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         }
         let rightBarButtonTitle = isFromSelectionVC ? YPConfig.wordings.done : YPConfig.wordings.next
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: rightBarButtonTitle,
-                                                            style: .plain,
+                                                            style: .done,
                                                             target: self,
                                                             action: #selector(save))
+        navigationItem.rightBarButtonItem?.tintColor = YPConfig.colors.tintColor
+        
         YPHelper.changeBackButtonTitle(self)
     }
     
@@ -107,9 +110,11 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         videoView.stop()
     }
     
+    // MARK: - Top buttons
+
     @objc public func save() {
         guard let didSave = didSave else { return print("Don't have saveCallback") }
-        YPLoaders.enableActivityIndicator(barButtonItem: &self.navigationItem.rightBarButtonItem)
+        navigationItem.rightBarButtonItem = YPLoaders.defaultLoader
 
         do {
             let asset = AVURLAsset(url: inputVideo.url)
@@ -120,7 +125,7 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
             // Looks like file:///private/var/mobile/Containers/Data/Application
             // /FAD486B4-784D-4397-B00C-AD0EFFB45F52/tmp/8A2B410A-BD34-4E3F-8CB5-A548A946C1F1.mov
             let destinationURL = URL(fileURLWithPath: NSTemporaryDirectory())
-                .appendingUniquePathComponent(pathExtension: YPConfig.videoExtension.fileExtension)
+                .appendingUniquePathComponent(pathExtension: YPConfig.video.fileType.fileExtension)
             
             try trimmedAsset.export(to: destinationURL) { [weak self] in
                 guard let weakSelf = self else { return }
@@ -140,9 +145,11 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         didCancel?()
     }
     
-    // MARK: Bottom buttons
+    // MARK: - Bottom buttons
 
     @objc public func selectTrim() {
+        title = YPConfig.wordings.trim
+        
         trimBottomItem.select()
         coverBottomItem.deselect()
 
@@ -153,6 +160,8 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
     }
     
     @objc public func selectCover() {
+        title = YPConfig.wordings.cover
+        
         trimBottomItem.deselect()
         coverBottomItem.select()
         
@@ -165,7 +174,27 @@ public class YPVideoFiltersVC: UIViewController, IsMediaFilterVC {
         videoView.stop()
     }
     
-    // MARK: Trimmer playback
+    // MARK: - Various Methods
+
+    // Updates the bounds of the cover picker if the video is trimmed
+    // TODO: Now the trimmer framework doesn't support an easy way to do this.
+    // Need to rethink a flow or search other ways.
+    func updateCoverPickerBounds() {
+        if let startTime = trimmerView.startTime,
+            let endTime = trimmerView.endTime {
+            if let selectedCoverTime = coverThumbSelectorView.selectedTime {
+                let range = CMTimeRange(start: startTime, end: endTime)
+                if !range.containsTime(selectedCoverTime) {
+                    // If the selected before cover range is not in new trimeed range,
+                    // than reset the cover to start time of the trimmed video
+                }
+            } else {
+                // If none cover time selected yet, than set the cover to the start time of the trimmed video
+            }
+        }
+    }
+    
+    // MARK: - Trimmer playback
     
     @objc func itemDidFinishPlaying(_ notification: Notification) {
         if let startTime = trimmerView.startTime {
@@ -211,6 +240,7 @@ extension YPVideoFiltersVC: TrimmerViewDelegate {
         videoView.player.seek(to: playerTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero)
         videoView.play()
         startPlaybackTimeChecker()
+        updateCoverPickerBounds()
     }
     
     public func didChangePositionBar(_ playerTime: CMTime) {

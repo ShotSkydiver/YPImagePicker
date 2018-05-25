@@ -18,7 +18,6 @@ class YPAlbumVC: UIViewController {
     
     var didSelectAlbum: ((YPAlbum) -> Void)?
     var albums = [YPAlbum]()
-    var noVideos = false
     let albumsManager = YPAlbumsManager.default
     
     let v = YPAlbumView()
@@ -40,7 +39,6 @@ class YPAlbumVC: UIViewController {
                                                            target: self,
                                                            action: #selector(close))
         setUpTableView()
-        albumsManager.noVideos = noVideos
         fetchAlbumsInBackground()
     }
     
@@ -84,7 +82,7 @@ extension YPAlbumVC: UITableViewDataSource {
             cell.thumbnail.backgroundColor = .gray
             cell.thumbnail.image = album.thumbnail
             cell.title.text = album.title
-            cell.numberOfPhotos.text = "\(album.numberOfPhotos)"
+            cell.numberOfItems.text = "\(album.numberOfItems)"
             return cell
         }
         return UITableViewCell()

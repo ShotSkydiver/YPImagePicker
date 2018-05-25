@@ -69,6 +69,7 @@
 		99428A1B1E7BE04000B765A9 /* YPImagePicker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = YPImagePicker.xcodeproj; path = ../YPImagePicker.xcodeproj; sourceTree = "<group>"; };
 		997127C0208F45B30089272B /* PryntTrimmerView.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PryntTrimmerView.framework; path = ../Carthage/Build/iOS/PryntTrimmerView.framework; sourceTree = "<group>"; };
 		997A4CD11F4C3DC0009C3703 /* Stevia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Stevia.framework; path = ../Carthage/Build/iOS/Stevia.framework; sourceTree = "<group>"; };
+		998D452620AC8DFA007F8699 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		99A052A91F20DF24005600B3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		99A052AA1F20DF39005600B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		99A052AB1F20DF54005600B3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -176,7 +177,7 @@
 				TargetAttributes = {
 					99428A051E7BE02400B765A9 = {
 						CreatedOnToolsVersion = 8.2;
-						DevelopmentTeam = T4Q29AP976;
+						DevelopmentTeam = 4TATSTJ3J3;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -196,6 +197,7 @@
 				tr,
 				ar,
 				it,
+				de,
 			);
 			mainGroup = 994289FD1E7BE02400B765A9;
 			productRefGroup = 99428A071E7BE02400B765A9 /* Products */;
@@ -315,6 +317,7 @@
 				3B0E1B9D207069630048E95B /* tr */,
 				A7B961E020755CF500216346 /* ar */,
 				99BEB97B20A9DE5F00FFEB55 /* it */,
+				998D452620AC8DFA007F8699 /* de */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -438,7 +441,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = T4Q29AP976;
+				DEVELOPMENT_TEAM = 4TATSTJ3J3;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/../Carthage/Build/iOS",
@@ -447,7 +450,7 @@
 				INFOPLIST_FILE = YPImagePickerExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = test.YPImagePickerExampl;
+				PRODUCT_BUNDLE_IDENTIFIER = test.YPImagePickerExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};
@@ -458,7 +461,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = T4Q29AP976;
+				DEVELOPMENT_TEAM = 4TATSTJ3J3;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/../Carthage/Build/iOS",
@@ -467,7 +470,7 @@
 				INFOPLIST_FILE = YPImagePickerExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = test.YPImagePickerExampl;
+				PRODUCT_BUNDLE_IDENTIFIER = test.YPImagePickerExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};
