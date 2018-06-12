@@ -341,7 +341,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     
     private func fetchImageAndCrop(for asset: PHAsset,
                                    withCropRect: CGRect? = nil,
-                                   callback: @escaping (_ photo: UIImage) -> Void) {
+                                   callback: @escaping (_ photo: UIImage, _ exif: [String : Any]) -> Void) {
         delegate?.libraryViewStartedLoading()
         let cropRect = withCropRect ?? DispatchQueue.main.sync { v.currentCropRect() }
         let ts = targetSize(for: asset, cropRect: cropRect)
@@ -365,7 +365,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         }
     }
     
-    public func selectedMedia(photoCallback: @escaping (_ photo: UIImage) -> Void,
+    public func selectedMedia(photoCallback: @escaping (_ photo: UIImage, _ exifMeta : [String : Any]?) -> Void,
                               videoCallback: @escaping (_ videoURL: URL) -> Void,
                               multipleItemsCallback: @escaping (_ items: [YPMediaItem]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -392,9 +392,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                     
                     switch asset.asset.mediaType {
                     case .image:
-                        self.fetchImageAndCrop(for: asset.asset, withCropRect: asset.cropRect) { image in
-                            let resizedImage = self.resizedImageIfNeeded(image: image)
-                            let photo = YPMediaPhoto(image: resizedImage)
+                        self.fetchImageAndCrop(for: asset.asset, withCropRect: asset.cropRect) { image, exifMeta in
+                            let photo = YPMediaPhoto(image: image.resizedImageIfNeeded(), exifMeta: exifMeta)
                             resultMediaItems.append(YPMediaItem.photo(p: photo))
                             asyncGroup.leave()
                         }
@@ -426,11 +425,10 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                         }
                     })
                 case .image:
-                    self.fetchImageAndCrop(for: asset) { image in
+                    self.fetchImageAndCrop(for: asset) { image, exifMeta in
                         DispatchQueue.main.async {
                             self.delegate?.libraryViewFinishedLoading()
-                            let resizedImage = self.resizedImageIfNeeded(image: image)
-                            photoCallback(resizedImage)
+                            photoCallback(image.resizedImageIfNeeded(), exifMeta)
                         }
                     }
                 case .audio, .unknown:
@@ -443,41 +441,12 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     // MARK: - TargetSize
     
     private func targetSize(for asset: PHAsset, cropRect: CGRect) -> CGSize {
-        let width = floor(CGFloat(asset.pixelWidth) * cropRect.width)
-        let height = floor(CGFloat(asset.pixelHeight) * cropRect.height)
+        var width = (CGFloat(asset.pixelWidth) * cropRect.width).rounded(.toNearestOrEven)
+        var height = (CGFloat(asset.pixelHeight) * cropRect.height).rounded(.toNearestOrEven)
+        // round to lowest even number
+        width = (width.truncatingRemainder(dividingBy: 2) == 0) ? width : width - 1
+        height = (height.truncatingRemainder(dividingBy: 2) == 0) ? height : height - 1
         return CGSize(width: width, height: height)
-    }
-    
-    // Reduce image size further if needed libraryTargetImageSize is capped.
-    func resizedImageIfNeeded(image: UIImage) -> UIImage {
-        if case let YPLibraryImageSize.cappedTo(size: capped) = YPConfig.library.targetImageSize {
-            let size = cappedSize(for: image.size, cappedAt: capped)
-            if let resizedImage = image.resized(to: size) {
-                return resizedImage
-            }
-        }
-        return image
-    }
-    
-    private func cappedSize(for size: CGSize, cappedAt: CGFloat) -> CGSize {
-        var cappedWidth: CGFloat = 0
-        var cappedHeight: CGFloat = 0
-        if size.width > size.height {
-            // Landscape
-            let heightRatio = size.height / size.width
-            cappedWidth = min(size.width, cappedAt)
-            cappedHeight = cappedWidth * heightRatio
-        } else if size.height > size.width {
-            // Portrait
-            let widthRatio = size.width / size.height
-            cappedHeight = min(size.height, cappedAt)
-            cappedWidth = cappedHeight * widthRatio
-        } else {
-            // Squared
-            cappedWidth = min(size.width, cappedAt)
-            cappedHeight = min(size.height, cappedAt)
-        }
-        return CGSize(width: cappedWidth, height: cappedHeight)
     }
     
     // MARK: - Player
