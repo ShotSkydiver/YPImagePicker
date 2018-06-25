@@ -1,14 +1,22 @@
+<h1 align="center"> <br><img src="Images/logo/logotype_horizontal.png?raw=true" alt="ypimagepicker" width="512"> <br>
+
 <img src="https://raw.githubusercontent.com/Yummypets/YPImagePicker/master/Images/visual.jpg" width="400px" >
 
 ## YPImagePicker
 
 YPImagePicker is an instagram-like photo/video picker for iOS written in pure Swift. It is feature-rich and highly customizable to match your App's requirements.
 
+[![Language: Swift 4](https://img.shields.io/badge/language-swift%204-f48041.svg?style=flat)](https://developer.apple.com/swift)
 [![Version](https://img.shields.io/cocoapods/v/YPImagePicker.svg?style=flat)](http://cocoapods.org/pods/YPImagePicker)
 [![Platform](https://img.shields.io/cocoapods/p/YPImagePicker.svg?style=flat)](http://cocoapods.org/pods/YPImagePicker)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 [![codebeat badge](https://codebeat.co/badges/9710a89d-b1e2-4e55-a4a2-3ae1f98f4c53)](https://codebeat.co/projects/github-com-yummypets-ypimagepicker-master)
+[![License: MIT](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)](https://github.com/Yummypets/YPImagePicker/blob/master/LICENSE)
 [![GitHub tag](https://img.shields.io/github/release/Yummypets/YPImagePicker.svg)]()
+
+
+[Installation](#installation) - [Configuration](#configuration) - [Usage](#usage) - [Languages](#languages) - [UI Customization](#ui-customization)
+
 
 Give it a quick try :
 `pod repo update` then `pod try YPImagePicker`
@@ -78,8 +86,8 @@ you'll need to ad these `plist entries` :
 
 ```swift
 var config = YPImagePickerConfiguration()
-config.libraryMediaType = .photoAndVideo
-config.onlySquareFromLibrary = false
+config.library.mediaType = .photoAndVideo
+config.library.onlySquare  = false
 config.onlySquareImagesFromCamera = true
 config.targetImageSize = .original
 config.usesFrontCamera = true
@@ -87,17 +95,19 @@ config.showsFilters = true
 config.filters = [YPFilterDescriptor(name: "Normal", filterName: ""),
                   YPFilterDescriptor(name: "Mono", filterName: "CIPhotoEffectMono")]
 config.shouldSaveNewPicturesToAlbum = true
-config.videoCompression = AVAssetExportPresetHighestQuality
+config.video.compression = AVAssetExportPresetHighestQuality
 config.albumName = "MyGreatAppName"
 config.screens = [.library, .photo, .video]
 config.startOnScreen = .library
-config.videoRecordingTimeLimit = 10
-config.videoFromLibraryTimeLimit = 20
+config.video.recordingTimeLimit = 10
+config.video.libraryTimeLimit = 20
 config.showsCrop = .rectangle(ratio: (16/9))
 config.wordings.libraryTitle = "Gallery"
 config.hidesStatusBar = false
 config.overlayView = myOverlayView
-config.maxNumberOfItems = 5
+config.library.maxNumberOfItems = 5
+config.library.minNumberOfItems = 3
+config.isScrollToChangeModesEnabled = false
 
 // Build a picker with your configuration
 let picker = YPImagePicker(configuration: config)
@@ -157,10 +167,10 @@ present(picker, animated: true, completion: nil)
 As you can see `singlePhoto` and `singleVideo` helpers are here to help you handle single media which are very common, while using the same callback for all your use-cases \o/
 
 ### Multiple selection
-To enable multiple selection make sure to set `maxNumberOfItems` in the configuration like so:
+To enable multiple selection make sure to set `library.maxNumberOfItems` in the configuration like so:
 ```swift
 var config = YPImagePickerConfiguration()
-config.maxNumberOfItems = 3
+config.library.maxNumberOfItems = 3
 let picker = YPImagePicker(configuration: config)
 ```
 Then you can handle multiple selection in the same callback you know and love :
@@ -190,7 +200,7 @@ picker.didFinishPicking { [unowned picker] items, cancelled in
 That's it !
 
 ## Languages
-🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French 🇷🇺 Russian, 🇳🇱 Dutch, 🇧🇷 Brazilian, 🇹🇷 Turkish,  Arabic, 🇩🇪 German, 🇮🇹 Italian, 🇯🇵 Japanese
+🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French 🇷🇺 Russian, 🇳🇱 Dutch, 🇧🇷 Brazilian, 🇹🇷 Turkish,  Arabic, 🇩🇪 German, 🇮🇹 Italian, 🇯🇵 Japanese, 🇨🇳 Chinese
 
 If your language is not supported, you can still customize the wordings via the `configuration.wordings` api:
 
@@ -200,6 +210,30 @@ config.wordings.cameraTitle = "Camera"
 config.wordings.next = "OK"
 ```
 Better yet you can submit an issue or pull request with your `Localizable.strings` file to add a new language !
+
+## UI Customization
+We tried to keep things as native as possible, so this is done mostly through native Apis.
+
+### Navigation bar color
+```swift
+let coloredImage = UIImage(color: .red)
+UINavigationBar.appearance().setBackgroundImage(coloredImage, for: UIBarMetrics.default)
+// UIImage+color helper https://stackoverflow.com/questions/26542035/create-uiimage-with-solid-color-in-swift
+```
+
+### Navigation bar fonts
+```swift
+let attributes = [NSAttributedStringKey.font : UIFont.systemFont(ofSize: 30, weight: .bold) ]
+UINavigationBar.appearance().titleTextAttributes = attributes // Title fonts
+UIBarButtonItem.appearance().setTitleTextAttributes(attributes, for: .normal) // Bar Button fonts
+```
+
+### Navigation bar Text colors
+```swift
+UINavigationBar.appearance().titleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.yellow ] // Title color
+UINavigationBar.appearance().tintColor = .red // Left. bar buttons
+config.colors.tintColor = .green // Right bar buttons (actions)
+```
 
 ## Original Project & Author
 
@@ -228,6 +262,8 @@ Original Fusuma author is [ytakz](http://ytakzk.me)
 [portellaa](https://github.com/portellaa)
 [Romixery](https://github.com/romixery)
 [shotat](https://github.com/shotat)
+
+Special thanks to [ihtiht](https://github.com/ihtiht) for the cool looking logo!
 
 ## They helped us one way or another 👏
 [userdar](https://github.com/userdar),

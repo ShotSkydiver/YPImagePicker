@@ -18,6 +18,9 @@ public struct YPImagePickerConfiguration {
     
     public init() {}
     
+    /// Scroll to change modes, defaults to true
+    public var isScrollToChangeModesEnabled = true
+    
     // Library configuration
     public var library = YPConfigLibrary()
     
@@ -114,7 +117,7 @@ public struct YPImagePickerConfiguration {
     @available(*, obsoleted: 3.0.0, renamed: "library.onlySquare")
     public var onlySquareFromLibrary = false
     
-    @available(*, obsoleted: 3.0.0, renamed: "library.targetImageSize")
+    @available(*, obsoleted: 3.0.0, renamed: "targetImageSize")
     public var libraryTargetImageSize = YPImageSize.original
     
     @available(*, obsoleted: 3.0.0, renamed: "library.mediaType")
@@ -139,6 +142,10 @@ public struct YPConfigLibrary {
     
     /// Anything superior than 1 will enable the multiple selection feature.
     public var maxNumberOfItems = 1
+    
+    /// Anything greater than 1 will desactivate live photo and video modes (library only) and
+    // force users to select at least the number of items defined.
+    public var minNumberOfItems = 1
     
     /// Allow to skip the selections gallery when selecting the multiple media items. Defaults to false.
     public var skipSelectionsGallery = false
