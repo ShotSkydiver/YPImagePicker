@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import CoreMotion
 
 /// Abstracts Low Level AVFoudation details.
 class YPVideoHelper: NSObject {
@@ -26,17 +27,21 @@ class YPVideoHelper: NSObject {
     private var isCaptureSessionSetup: Bool = false
     private var isPreviewSetup = false
     private var previewView: UIView!
+    private var motionManager = CMMotionManager()
     
     // MARK: - Init
     
     public func start(previewView: UIView, withVideoRecordingLimit: TimeInterval, completion: @escaping () -> Void) {
         self.previewView = previewView
         self.videoRecordingTimeLimit = withVideoRecordingLimit
-        sessionQueue.async { [unowned self] in
-            if !self.isCaptureSessionSetup {
-                self.setupCaptureSession()
+        sessionQueue.async { [weak self] in
+            guard let strongSelf = self else {
+                return
             }
-            self.startCamera(completion: {
+            if !strongSelf.isCaptureSessionSetup {
+                strongSelf.setupCaptureSession()
+            }
+            strongSelf.startCamera(completion: {
                 completion()
             })
         }
@@ -65,29 +70,32 @@ class YPVideoHelper: NSObject {
     // MARK: - Flip Camera
     
     public func flipCamera(completion: @escaping () -> Void) {
-        sessionQueue.async { [unowned self] in
-            self.session.beginConfiguration()
-            self.session.resetInputs()
+        sessionQueue.async { [weak self] in
+            guard let strongSelf = self else {
+                return
+            }
+            strongSelf.session.beginConfiguration()
+            strongSelf.session.resetInputs()
             
-            if let videoInput = self.videoInput {
-                self.videoInput = flippedDeviceInputForInput(videoInput)
+            if let videoInput = strongSelf.videoInput {
+                strongSelf.videoInput = flippedDeviceInputForInput(videoInput)
             }
             
-            if let videoInput = self.videoInput {
-                if self.session.canAddInput(videoInput) {
-                    self.session.addInput(videoInput)
+            if let videoInput = strongSelf.videoInput {
+                if strongSelf.session.canAddInput(videoInput) {
+                    strongSelf.session.addInput(videoInput)
                 }
             }
             
             // Re Add audio recording
             for device in AVCaptureDevice.devices(for: .audio) {
                 if let audioInput = try? AVCaptureDeviceInput(device: device) {
-                    if self.session.canAddInput(audioInput) {
-                        self.session.addInput(audioInput)
+                    if strongSelf.session.canAddInput(audioInput) {
+                        strongSelf.session.addInput(audioInput)
                     }
                 }
             }
-            self.session.commitConfiguration()
+            strongSelf.session.commitConfiguration()
             DispatchQueue.main.async {
                 completion()
             }
@@ -144,12 +152,17 @@ class YPVideoHelper: NSObject {
             }
         }
         
-        let connection = videoOutput.connection(with: .video)
-        if (connection?.isVideoOrientationSupported)! {
-            connection?.videoOrientation = currentVideoOrientation()
+        checkOrientation { [weak self] orientation in
+            guard let strongSelf = self else {
+                return
+            }
+            if let connection = strongSelf.videoOutput.connection(with: .video) {
+                if let orientation = orientation, connection.isVideoOrientationSupported {
+                    connection.videoOrientation = orientation
+                }
+                strongSelf.videoOutput.startRecording(to: outputURL, recordingDelegate: strongSelf)
+            }
         }
-        
-        videoOutput.startRecording(to: outputURL, recordingDelegate: self)
     }
     
     public func stopRecording() {
@@ -205,20 +218,23 @@ class YPVideoHelper: NSObject {
     }
     
     // MARK: - Orientation
-    
-    func currentVideoOrientation() -> AVCaptureVideoOrientation {
-        var orientation: AVCaptureVideoOrientation
-        switch UIDevice.current.orientation {
-        case .portrait:
-            orientation = .portrait
-        case .landscapeRight:
-            orientation = .landscapeLeft
-        case .portraitUpsideDown:
-            orientation = .portraitUpsideDown
-        default:
-            orientation = .landscapeRight
+
+    /// This enables to get the correct orientation even when the device is locked for orientation \o/
+    private func checkOrientation(completion: @escaping(_ orientation: AVCaptureVideoOrientation?)->()) {
+        motionManager.accelerometerUpdateInterval = 5
+        motionManager.startAccelerometerUpdates( to: OperationQueue() ) { [weak self] data, _ in
+            self?.motionManager.stopAccelerometerUpdates()
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            let orientation: AVCaptureVideoOrientation = abs(data.acceleration.y) < abs(data.acceleration.x)
+                ? data.acceleration.x > 0 ? .landscapeLeft : .landscapeRight
+                : data.acceleration.y > 0 ? .portraitUpsideDown : .portrait
+            DispatchQueue.main.async {
+                completion(orientation)
+            }
         }
-        return orientation
     }
 
     // MARK: - Preview
