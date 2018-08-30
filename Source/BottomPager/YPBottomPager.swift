@@ -30,6 +30,8 @@ public class YPBottomPager: UIViewController, UIScrollViewDelegate {
     override public func loadView() {
         self.automaticallyAdjustsScrollViewInsets = false
         v.scrollView.delegate = self
+        v.scrollView.accessibilityIdentifier = "YPScrollView"
+        v.header.accessibilityIdentifier = "YPPagerMenu"
         view = v
     }
     

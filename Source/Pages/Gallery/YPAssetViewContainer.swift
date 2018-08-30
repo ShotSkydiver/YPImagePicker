@@ -28,6 +28,10 @@ class YPAssetViewContainer: UIView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        self.accessibilityIdentifier = "ypAssetViewContainer"
+        zoomableView?.accessibilityIdentifier = "ypAssetZoomableView"
+        zoomableView?.photoImageView.accessibilityIdentifier = "ypAssetImageView"
+        squareCropButton.accessibilityIdentifier = "ypCropButton"
         multipleSelectionButton.accessibilityIdentifier = "ypMultipleSelectionButton"
         
         addSubview(grid)

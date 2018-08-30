@@ -26,13 +26,7 @@
                                 <size key="headerReferenceSize" width="0.0" height="0.0"/>
                                 <size key="footerReferenceSize" width="0.0" height="0.0"/>
                                 <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
-                                <userDefinedRuntimeAttributes>
-                                    <userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="ypCollectionViewFlow"/>
-                                </userDefinedRuntimeAttributes>
                             </collectionViewFlowLayout>
-                            <userDefinedRuntimeAttributes>
-                                <userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="ypCollectionView"/>
-                            </userDefinedRuntimeAttributes>
                         </collectionView>
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -53,9 +47,6 @@
                         </scrollView>
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                    <accessibility key="accessibilityConfiguration" identifier="ypAssetView">
-                        <bool key="isElement" value="YES"/>
-                    </accessibility>
                     <constraints>
                         <constraint firstItem="Mc5-1c-z7q" firstAttribute="leading" secondItem="90B-0c-ych" secondAttribute="leading" id="1DN-yd-Kyl"/>
                         <constraint firstAttribute="bottom" secondItem="Mc5-1c-z7q" secondAttribute="bottom" id="1Yc-V1-EBB"/>
@@ -66,9 +57,6 @@
                 </view>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-            <accessibility key="accessibilityConfiguration" identifier="ypLibraryView">
-                <bool key="isElement" value="YES"/>
-            </accessibility>
             <constraints>
                 <constraint firstItem="6id-Ro-HHC" firstAttribute="top" secondItem="Mc5-1c-z7q" secondAttribute="bottom" id="2VS-x4-Kjb"/>
                 <constraint firstAttribute="trailing" secondItem="90B-0c-ych" secondAttribute="trailing" id="7re-q7-aoD"/>

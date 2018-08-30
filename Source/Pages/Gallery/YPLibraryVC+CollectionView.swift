@@ -12,6 +12,7 @@ extension YPLibraryVC {
     var isLimitExceeded: Bool { return selection.count >= YPConfig.library.maxNumberOfItems }
     
     func setupCollectionView() {
+        v.collectionView.accessibilityIdentifier = "YPLibraryCollectionView"
         v.collectionView.dataSource = self
         v.collectionView.delegate = self
         v.collectionView.register(YPLibraryViewCell.self, forCellWithReuseIdentifier: "YPLibraryViewCell")
@@ -98,6 +99,19 @@ extension YPLibraryVC: UICollectionViewDelegate {
                                                             for: indexPath) as? YPLibraryViewCell else {
                                                                 fatalError("unexpected cell in collection view")
         }
+        
+        cell.isAccessibilityElement = false
+        cell.accessibilityIdentifier = String(format: "YPLibraryViewCell-%d-%d", indexPath.section, indexPath.item)
+        cell.accessibilityLabel = cell.accessibilityIdentifier
+        cell.contentView.isAccessibilityElement = false
+        cell.contentView.accessibilityIdentifier = String(format: "YPCellContentView-%d-%d", indexPath.section, indexPath.item)
+        cell.contentView.accessibilityLabel = cell.contentView.accessibilityIdentifier
+        
+        cell.imageView.accessibilityIdentifier = String(format: "YPLibraryViewCellImageView-%d-%d", indexPath.section, indexPath.item)
+        cell.selectionOverlay.accessibilityIdentifier = String(format: "YPLibraryViewCellSelectionOverlay-%d-%d", indexPath.section, indexPath.item)
+        cell.multipleSelectionIndicator.accessibilityIdentifier = String(format: "YPMultipleSelectionIndicator-%d-%d", indexPath.section, indexPath.item)
+        cell.multipleSelectionIndicator.label.accessibilityIdentifier = String(format: "YPMultipleSelectionLabel-%d-%d", indexPath.section, indexPath.item)
+        
         cell.representedAssetIdentifier = asset.localIdentifier
         cell.multipleSelectionIndicator.selectionColor = YPConfig.colors.multipleItemsSelectedCircleColor
                                                             ?? YPConfig.colors.tintColor

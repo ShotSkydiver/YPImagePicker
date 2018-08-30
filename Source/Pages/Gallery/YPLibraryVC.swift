@@ -69,6 +69,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     
     public override func loadView() {
         v = YPLibraryView.xibView()
+        v.accessibilityIdentifier = "YPLibraryView"
         view = v
     }
     

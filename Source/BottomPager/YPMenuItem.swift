@@ -29,7 +29,7 @@ final class YPMenuItem: UIView {
     }
     
     func setup() {
-        accessibilityIdentifier = "ypMenuItem"
+        
         backgroundColor = .clear
         
         sv(
