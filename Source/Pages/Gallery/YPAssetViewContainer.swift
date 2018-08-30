@@ -28,6 +28,7 @@ class YPAssetViewContainer: UIView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        multipleSelectionButton.accessibilityIdentifier = "ypMultipleSelectionButton"
         
         addSubview(grid)
         grid.frame = frame

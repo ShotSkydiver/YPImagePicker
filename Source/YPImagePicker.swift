@@ -76,6 +76,7 @@ public class YPImagePicker: UINavigationController {
     
     override public func viewDidLoad() {
         super.viewDidLoad()
+        
         picker.didClose = { [weak self] in
             self?.didCancel?()
             self?._didFinishPicking?([], true)

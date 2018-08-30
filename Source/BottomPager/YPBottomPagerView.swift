@@ -16,6 +16,9 @@ final class YPBottomPagerView: UIView {
     
     convenience init() {
         self.init(frame: .zero)
+        header.accessibilityIdentifier = "ypPagerMenu"
+        scrollView.accessibilityIdentifier = "ypBottomPagerScrollView"
+        
         backgroundColor = UIColor(red: 239/255, green: 238/255, blue: 237/255, alpha: 1)
         
         sv(

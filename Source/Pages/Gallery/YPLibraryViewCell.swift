@@ -17,7 +17,7 @@ class YPMultipleSelectionIndicator: UIView {
     
     convenience init() {
         self.init(frame: .zero)
-        
+        accessibilityIdentifier = "ypMultipleSelectionIndicator"
         let size: CGFloat = 20
         
         sv(
@@ -64,6 +64,9 @@ class YPLibraryViewCell: UICollectionViewCell {
     required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     override init(frame: CGRect) {
         super.init(frame: frame)
+        accessibilityIdentifier = "ypLibraryViewCell"
+        imageView.accessibilityIdentifier = "ypLibraryViewCellImageView"
+        selectionOverlay.accessibilityIdentifier = "ypLibraryViewCellSelectionOverlay"
         
         sv(
             imageView,
