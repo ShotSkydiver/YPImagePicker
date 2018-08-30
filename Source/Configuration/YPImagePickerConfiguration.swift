@@ -9,6 +9,7 @@
 import Foundation
 import AVFoundation
 import UIKit
+import Photos
 
 /// Typealias for code prettiness
 internal var YPConfig: YPImagePickerConfiguration { return YPImagePickerConfiguration.shared }
@@ -73,6 +74,15 @@ public struct YPImagePickerConfiguration {
     
     /// Defines if the status bar should be hidden when showing the picker. Default is true
     public var hidesStatusBar = true
+    
+    /// Defines the preferredStatusBarAppearance
+    public var preferredStatusBarStyle = UIStatusBarStyle.default
+    
+    /// Defines the text colour to be shown when a bottom option is selected
+    public var bottomMenuItemSelectedColour = UIColor(r: 38, g: 38, b: 38)
+    
+    /// Defines the text colour to be shown when a bottom option is unselected
+    public var bottomMenuItemUnSelectedColour = UIColor(r: 153, g: 153, b: 153)
     
     /// List of default filters which will be added on the filter screen
     public var filters: [YPFilter] = [
@@ -141,8 +151,13 @@ public struct YPImagePickerConfiguration {
 /// Encapsulates library specific settings.
 public struct YPConfigLibrary {
     
+     public var options: PHFetchOptions? = nil
+    
     /// Set this to true if you want to force the library output to be a squared image. Defaults to false
     public var onlySquare = false
+    
+    /// Minimum width, to prevent selectiong too high images. Have sense if onlySquare is true and the image is portrait.
+    public var minWidthForItem: CGFloat?
     
     /// Choose what media types are available in the library. Defaults to `.photo`
     public var mediaType = YPlibraryMediaType.photo
