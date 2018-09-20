@@ -239,7 +239,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
             v.collectionView.reloadData()
             v.collectionView.selectItem(at: IndexPath(row: 0, section: 0),
                                              animated: false,
-                                             scrollPosition: UICollectionViewScrollPosition())
+                                             scrollPosition: UICollectionView.ScrollPosition())
         } else {
             delegate?.noPhotosForOptions()
         }
