@@ -36,8 +36,13 @@ final class YPBottomPagerView: UIView {
         } else {
             header.bottom(0)
         }
+        header.heightConstraint?.constant = YPConfig.hidesBottomBar ? 0 : 44
         
         clipsToBounds = false
+        setupScrollView()
+    }
+
+    private func setupScrollView() {
         scrollView.clipsToBounds = false
         scrollView.isPagingEnabled = true
         scrollView.showsHorizontalScrollIndicator = false
