@@ -34,8 +34,13 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     }
     
     func setAlbum(_ album: YPAlbum) {
+        title = album.title
         mediaManager.collection = album.collection
         currentlySelectedIndex = 0
+        if !multipleSelectionEnabled {
+            selection.removeAll()
+        }
+        refreshMediaRequest()
     }
     
     func initialize() {
@@ -51,7 +56,10 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         panGestureHelper.registerForPanGesture(on: v)
         registerForTapOnPreview()
         refreshMediaRequest()
-        
+
+        if YPConfig.library.defaultMultipleSelection {
+            multipleSelectionButtonTapped()
+        }
         v.assetViewContainer.multipleSelectionButton.isHidden = !(YPConfig.library.maxNumberOfItems > 1)
         v.maxNumberWarningLabel.text = String(format: YPConfig.wordings.warningMaxItemsLimit, YPConfig.library.maxNumberOfItems)
     }
@@ -218,6 +226,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                     block(s == .authorized)
                 }
             }
+        @unknown default:
+            fatalError()
         }
     }
     
@@ -296,6 +306,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                                                   completion: completion)
             case .audio, .unknown:
                 ()
+            @unknown default:
+                fatalError()
             }
         }
     }
@@ -312,7 +324,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         
         if tooLong || tooShort {
             DispatchQueue.main.async {
-                let alert = tooLong ? YPAlert.videoTooLongAlert() : YPAlert.videoTooShortAlert()
+                let alert = tooLong ? YPAlert.videoTooLongAlert(self.view) : YPAlert.videoTooShortAlert(self.view)
                 self.present(alert, animated: true, completion: nil)
             }
             return false
@@ -324,7 +336,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     // MARK: - Stored Crop Position
     
     internal func updateCropInfo(shouldUpdateOnlyIfNil: Bool = false) {
-        guard let selectedAssetIndex = selection.index(where: { $0.index == currentlySelectedIndex }) else {
+        guard let selectedAssetIndex = selection.firstIndex(where: { $0.index == currentlySelectedIndex }) else {
             return
         }
         
@@ -347,7 +359,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         if self.multipleSelectionEnabled,
             self.selection.contains(where: { $0.index == self.currentlySelectedIndex }) {
             guard let selectedAssetIndex = self.selection
-                .index(where: { $0.index == self.currentlySelectedIndex }) else {
+                .firstIndex(where: { $0.index == self.currentlySelectedIndex }) else {
                 return nil
             }
             return self.selection[selectedAssetIndex]
@@ -441,6 +453,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         } else {
                 let asset = selectedAssets.first!.asset
                 switch asset.mediaType {
+                case .audio, .unknown:
+                    return
                 case .video:
                     self.checkVideoLengthAndCrop(for: asset, callback: { videoURL in
                         DispatchQueue.main.async {
@@ -460,8 +474,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                             photoCallback(photo)
                         }
                     }
-                case .audio, .unknown:
-                    return
+                @unknown default:
+                    fatalError()
                 }
             }
         }
